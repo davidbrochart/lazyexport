@@ -1,53 +1,73 @@
 # lazyexport
 
-Lazy package exports from ordinary import declarations. Extracted from AnyIO's
-lazy importer, under its MIT license. Requires Python 3.11 or later and has no
-runtime dependencies.
+Extracted from [AnyIO](https://github.com/agronholm/anyio)'s lazy importer.
+
+## Usage
 
 ```python
 from typing import TYPE_CHECKING
 from lazyexport import install, fix_package_names
 
 if TYPE_CHECKING or not install():
+    # Declare your public exports here
     from ._client import Client as Client
 
-    fix_package_names()
+    fix_package_names()  # optional
 ```
 
-Place this in your package's `__init__.py` (ordinary modules also work).
-`install()` reads the calling module's source and builds a map of exports from
-the imports in the conditional block. It installs module-level `__getattr__`
-and `__dir__` hooks and returns True, skipping the eager imports. Accessing an
-export imports its implementation and caches the value in the calling module.
-If source is unavailable, it returns False and the imports execute eagerly.
-`fix_package_names()` makes implementation module names public in that fallback.
-The lazy path also rewrites exported objects' `__module__` to the exporting module.
+Place this in the module that exposes your public exports.
+Public exports are loaded when first accessed. Lazy loading requires access to
+the exporting module's Python source to discover its imports. If the source
+cannot be inspected, for example in an installation containing only compiled
+`.pyc` files, imports run normally instead.
 
-## Supported declarations
+Lazy loading sets exported objects' `__module__` to the exporting module's name,
+so a class exposed by `mypackage` appears to belong to `mypackage` rather than
+`mypackage._client`. The optional `fix_package_names()` call applies similar
+rewriting when imports run eagerly, removing private components from module names.
+This affects introspection, documentation, and pickling; imports work without it.
 
-Use direct `from module import name` statements inside the top-level
-`if TYPE_CHECKING or not install():` block. Relative imports and export aliases
-are supported. `from . import submodule` exposes submodules lazily. Star imports,
-plain `import module` declarations, and nested import declarations are unsupported.
-Use the unaliased helper names shown here.
+The following import forms are supported:
 
-For deprecated names, import `set_deprecated_aliases` from lazyexport and call it
-inside the block with a literal dictionary mapping old names to fully qualified
-replacement names. Access emits DeprecationWarning. Lazy resolutions are cached;
-the eager fallback warns on each access.
+```python
+if TYPE_CHECKING or not install():
+    from another_package import Client  # absolute import
+    from ._server import Server  # relative import
+    from ._client import Client as PublicClient  # export alias
+    from . import submodule  # lazy submodule access
+```
 
-The installer replaces existing `__getattr__` and `__dir__` hooks. `dir()` lists
-mapped attribute exports. Define `__all__` explicitly if you need star exports;
-star importing resolves those exports eagerly. References to missing names inside
-the exporting module do not trigger `__getattr__`; use this for exports consumed
-through module attribute access or `from` imports.
+The following declarations are unsupported:
+
+```python
+if TYPE_CHECKING or not install():
+    from ._client import *  # raises an error
+    import another_package  # not collected as a lazy export
+
+    if some_condition:
+        from ._server import Server  # nested imports are not collected
+```
+
+Map deprecated names to their replacements with `set_deprecated_aliases()`:
+
+```python
+from typing import TYPE_CHECKING
+from lazyexport import install, set_deprecated_aliases
+
+if TYPE_CHECKING or not install():
+    from ._client import Client as Client
+
+    set_deprecated_aliases({"OldClient": "mypackage.Client"})
+```
+
+Accessing `mypackage.OldClient` returns `mypackage.Client` and emits a
+`DeprecationWarning`.
 
 ## Development
 
 ```sh
-python -m pip install --upgrade pip
-python -m pip install --group dev -e .
-python -m pytest
+uv sync --group dev
+uv run pytest
 ```
 
 ## Releasing
@@ -70,9 +90,3 @@ Push the commit, then push a matching version tag:
 git tag 0.1.0
 git push origin 0.1.0
 ```
-
-The release workflow tests the package, builds and checks the wheel and source
-distribution, and publishes them to PyPI using trusted publishing. The tag must
-match the package version exactly (no `v` prefix). Configure the PyPI trusted
-publisher with this repository and workflow filename `release.yml`, leaving the
-environment field empty. No API token is required.
