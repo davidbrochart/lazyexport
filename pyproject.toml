@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=68"]
-build-backend = "setuptools.build_meta"
+requires = ["uv_build>=0.13.7,<0.14"]
+build-backend = "uv_build"
 
 [project]
 name = "lazyexport"
@@ -8,17 +8,54 @@ version = "0.1.0"
 description = "Lazy package exports from ordinary import declarations"
 readme = "README.md"
 requires-python = ">=3.11"
-license = {file = "LICENSE"}
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Alex Grönholm" },
+    { name = "David Brochart" },
+]
+keywords = ["lazy", "imports", "exports"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Typing :: Typed",
+]
 
-[project.optional-dependencies]
-test = ["pytest>=8"]
+[project.urls]
+Homepage = "https://github.com/davidbrochart/lazyexport"
+Repository = "https://github.com/davidbrochart/lazyexport"
+Issues = "https://github.com/davidbrochart/lazyexport/issues"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[dependency-groups]
+dev = ["pytest>=8", "towncrier>=24.8"]
 
-[tool.setuptools.package-data]
-lazyexport = ["py.typed"]
+[tool.towncrier]
+name = "lazyexport"
+directory = "changelog.d"
+filename = "CHANGELOG.rst"
+issue_format = "`#{issue} <https://github.com/davidbrochart/lazyexport/issues/{issue}>`_"
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-pythonpath = ["src"]
+[[tool.towncrier.type]]
+directory = "added"
+name = "Added"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "changed"
+name = "Changed"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "fixed"
+name = "Fixed"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "removed"
+name = "Removed"
+showcontent = true

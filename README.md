@@ -45,15 +45,26 @@ through module attribute access or `from` imports.
 ## Development
 
 ```sh
-python -m pip install -e '.[test]'
+python -m pip install --upgrade pip
+python -m pip install --group dev -e .
 python -m pytest
 ```
 
 ## Releasing
 
-Set `project.version` in `pyproject.toml` to the release version and commit it,
-including `.github/workflows/release.yml`. Push the commit, then push a matching
-version tag:
+Add a fragment in `changelog.d/` for each user-facing change; see
+[changelog.d/README.rst](changelog.d/README.rst) for naming and types.
+
+Set `project.version` in `pyproject.toml` to the release version, then preview
+and generate the changelog (using that same version):
+
+```sh
+uv run --group dev towncrier build --draft --version 0.1.0
+uv run --group dev towncrier build --yes --version 0.1.0
+```
+
+Commit the version update, generated `CHANGELOG.rst`, and deleted fragments.
+Push the commit, then push a matching version tag:
 
 ```sh
 git tag 0.1.0
