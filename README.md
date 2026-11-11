@@ -48,3 +48,20 @@ through module attribute access or `from` imports.
 python -m pip install -e '.[test]'
 python -m pytest
 ```
+
+## Releasing
+
+Set `project.version` in `pyproject.toml` to the release version and commit it,
+including `.github/workflows/release.yml`. Push the commit, then push a matching
+version tag:
+
+```sh
+git tag 0.1.0
+git push origin 0.1.0
+```
+
+The release workflow tests the package, builds and checks the wheel and source
+distribution, and publishes them to PyPI using trusted publishing. The tag must
+match the package version exactly (no `v` prefix). Configure the PyPI trusted
+publisher with this repository and workflow filename `release.yml`, leaving the
+environment field empty. No API token is required.
